@@ -5,6 +5,8 @@ import queue
 import signal
 import subprocess
 import threading
+import tempfile
+import time
 from pathlib import Path
 from .runtime import worker_command, subprocess_options
 from .validation import redact_diagnostic
@@ -30,17 +32,41 @@ class DownloadController:
             options = subprocess_options()
             if os.name != 'nt':
                 options['start_new_session'] = True
-            self._process = subprocess.Popen(worker_command(url, destination), stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL, text=True, encoding='utf-8', errors='replace', **options)
+            transport = tempfile.TemporaryDirectory(prefix='video-events-')
+            path = Path(transport.name)/'events.jsonl'
+            path.touch()
+            environment = os.environ.copy()
+            environment['VIDEO_DOWNLOADER_EVENTS'] = str(path)
+            try:
+                self._process = subprocess.Popen(worker_command(url, destination), stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, env=environment, **options)
+            except Exception:
+                transport.cleanup()
+                raise
             self._active = True
-            threading.Thread(target=self._monitor, args=(self._process,), daemon=True).start()
+            threading.Thread(target=self._monitor, args=(self._process, transport, path), daemon=True).start()
 
-    def _monitor(self, process):
+    def _monitor(self, process, transport, path):
         complete = None
         error = None
         try:
-            with process.stdout:
-                for line in process.stdout:
+            with path.open(encoding='utf-8') as stream:
+                pending = ''
+                while True:
+                    line = stream.readline()
+                    if not line:
+                        if process.poll() is not None:
+                            # Child has exited: drain any bytes written before exit.
+                            line = stream.readline()
+                            if not line:
+                                break
+                        else:
+                            time.sleep(.05)
+                            continue
+                    pending += line
+                    if not pending.endswith('\n'):
+                        continue
+                    line, pending = pending, '' 
                     try:
                         event = json.loads(line)
                         if not isinstance(event, dict):
@@ -65,6 +91,7 @@ class DownloadController:
                 terminal = error or {'type': 'error', 'message': 'The download worker stopped without a verified output. Partial downloads are retained for retry.'}
         except Exception:
             terminal = {'type': 'error', 'message': 'Unable to read the download worker result.'}
+        transport.cleanup()
         with self._lock:
             self._events.put(terminal)
             self._active = False

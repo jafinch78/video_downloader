@@ -30,5 +30,5 @@ class ValidationTests(unittest.TestCase):
             self.assertEqual(asset_path('ffmpeg.exe'), Path('/tmp/bundle/assets/ffmpeg.exe'))
             command = worker_command('https://example.com', Path('/tmp/with space 空'))
             self.assertIn('--worker', command)
-            self.assertEqual(command[-1], '/tmp/with space 空')
+            self.assertEqual(command[-1], str(Path('/tmp/with space 空')))
         self.assertIn('video_downloader.worker', worker_command('https://example.com', Path('/tmp')))

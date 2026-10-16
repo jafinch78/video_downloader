@@ -123,8 +123,12 @@ def main(argv=None) -> int:
     parser.add_argument('--url', required=True)
     parser.add_argument('--destination', required=True)
     args = parser.parse_args(argv)
+    event_path = os.environ.get('VIDEO_DOWNLOADER_EVENTS')
+    stream = open(event_path, 'a', encoding='utf-8', buffering=1) if event_path else sys.stdout
     def emit(event):
-        print(json.dumps(event, ensure_ascii=True), flush=True)
+        if stream is None:
+            raise RuntimeError('Worker requires an event transport.')
+        print(json.dumps(event, ensure_ascii=True), file=stream, flush=True)
     try:
         run_download(args.url, Path(args.destination), emit)
         return 0
@@ -132,6 +136,9 @@ def main(argv=None) -> int:
         message = redact_diagnostic(str(exc)).replace('\x1b', '')
         emit({'type': 'error', 'message': message + '\nPartial downloads are retained for retry.'})
         return 1
+    finally:
+        if event_path:
+            stream.close()
 
 
 if __name__ == '__main__':

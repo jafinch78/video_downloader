@@ -1,3 +1,4 @@
+import gc
 import tempfile
 import tkinter as tk
 import unittest
@@ -34,6 +35,9 @@ class GuiTests(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, 'app'):
             self.root.destroy()
+            del self.app
+            del self.root
+            gc.collect()
             self.temp.cleanup()
     def test_download_and_completion(self):
         self.app.url.set('https://example.com/watch?v=1')

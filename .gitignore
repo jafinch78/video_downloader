@@ -6,3 +6,4 @@ build/
 dist/
 assets/
 *.part
+.venv-build/

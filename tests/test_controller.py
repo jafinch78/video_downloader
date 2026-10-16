@@ -9,6 +9,7 @@ from video_downloader.controller import DownloadController
 
 class ControllerTests(unittest.TestCase):
     def run_worker(self, code):
+        code = "import os,sys; sys.stdout=open(os.environ['VIDEO_DOWNLOADER_EVENTS'],'a',buffering=1,encoding='utf-8'); " + code
         controller = DownloadController()
         with patch('video_downloader.controller.worker_command', return_value=[sys.executable, '-c', code]):
             controller.start('https://example.com', Path('/tmp'))
