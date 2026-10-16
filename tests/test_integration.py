@@ -14,7 +14,14 @@ class MediaIntegrationTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.output = self.root/'output 空'
         self.output.mkdir()
+        self.requests=[]
+        requests=self.requests
         class Quiet(http.server.SimpleHTTPRequestHandler):
+            def do_GET(self):
+                requests.append(self.path.split('?')[0])
+                if self.path.split('?')[0]=='/concurrent.mp4':
+                    time.sleep(.2)
+                return super().do_GET()
             def log_message(self, *args):
                 pass
         self.server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Quiet, directory=self.temp.name))
@@ -83,3 +90,45 @@ class MediaIntegrationTests(unittest.TestCase):
         self.assertFalse(controller.active, 'worker did not finish')
         self.assertEqual(events[-1]['type'],'complete', events)
         self.assertTrue(Path(events[-1]['path']).is_file())
+
+    def test_multi_video_page_is_rejected_before_media_download(self):
+        self.media('first.mp4')
+        (self.root/'second.mp4').write_bytes((self.root/'first.mp4').read_bytes())
+        (self.root/'multiple.html').write_text('<html><title>Multiple</title><video src="first.mp4"></video><video src="second.mp4"></video></html>')
+        with self.assertRaisesRegex(RuntimeError,'one video'):
+            run_download(f'http://127.0.0.1:{self.server.server_port}/multiple.html',self.output,lambda e:None)
+        self.assertNotIn('/first.mp4',self.requests)
+        self.assertNotIn('/second.mp4',self.requests)
+
+    def test_signed_url_failure_never_leaks_query(self):
+        import os
+        import json
+        from unittest.mock import patch
+        from video_downloader.worker import main
+        events=self.root/'events.jsonl'
+        import socket
+        with socket.socket() as probe:
+            probe.bind(('127.0.0.1',0))
+            port=probe.getsockname()[1]
+        url=f'http://127.0.0.1:{port}/video?token=VERY_PRIVATE'
+        with patch.dict(os.environ,{'VIDEO_DOWNLOADER_EVENTS':str(events)}):
+            self.assertEqual(main(['--url',url,'--destination',str(self.output)]),1)
+        result=events.read_text()
+        self.assertNotIn('VERY_PRIVATE',result)
+        self.assertNotIn('token=',result)
+        self.assertEqual(json.loads(result.splitlines()[-1])['type'],'error')
+
+    def test_concurrent_same_url_has_exclusive_stage(self):
+        from concurrent.futures import ThreadPoolExecutor
+        url=self.media('concurrent.mp4')
+        def attempt():
+            try:
+                return run_download(url,self.output,lambda e:None)
+            except Exception as exc:
+                return exc
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results=list(pool.map(lambda n:attempt(),range(2)))
+        self.assertEqual(sum(isinstance(r,Path) for r in results),1,results)
+        errors=[str(r) for r in results if isinstance(r,Exception)]
+        self.assertEqual(len(errors),1)
+        self.assertIn('already being downloaded',errors[0])

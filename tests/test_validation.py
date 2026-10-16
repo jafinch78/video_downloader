@@ -20,7 +20,7 @@ class ValidationTests(unittest.TestCase):
                 validate_destination(str(Path(directory) / 'absent'))
 
     def test_redaction(self):
-        result = redact_diagnostic('Error https://user:password@example.com/watch?token=secret#private')
+        result = redact_diagnostic('Error HTTPS://user:password@example.com/watch?token=secret#private')
         for secret in ['user', 'password', 'secret', 'private']:
             self.assertNotIn(secret, result)
         self.assertIn('example.com', result)

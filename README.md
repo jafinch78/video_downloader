@@ -13,7 +13,7 @@ The intended Windows release is a portable ZIP. Extract the **whole** `VideoDown
 - Prefer MP4-compatible video/audio. Other streams merge into MKV without quality-losing re-encoding.
 - The final file must contain audio and video. A silent source produces an error.
 - Completed files are never overwritten; duplicate names receive a numbered suffix.
-- Cancelled/failed downloads retain `.video-downloader-partials` in the selected folder for retry. You can delete this folder when no application instance is downloading there.
+- Cancelled/failed downloads retain `.video-downloader-partials` in the selected folder for retry. Small ownership-lock files also remain after successful downloads. You can delete this folder when no application instance is downloading there. Concurrent downloads of the same URL to the same folder are rejected safely.
 - The application stores no login credentials. URLs with embedded usernames/passwords are rejected; URL details are redacted from diagnostics.
 
 ## Develop from source

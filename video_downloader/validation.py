@@ -40,4 +40,4 @@ def redact_diagnostic(text: str) -> str:
             return f'{parsed.scheme}://{parsed.hostname or "[host]"}/[URL redacted]'
         except ValueError:
             return '[URL redacted]'
-    return re.sub(r'https?://[^\s<>"\']+', clean, str(text))
+    return re.sub(r'https?://[^\s<>"\']+', clean, str(text), flags=re.IGNORECASE)

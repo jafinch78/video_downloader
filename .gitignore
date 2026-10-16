@@ -7,3 +7,5 @@ dist/
 assets/
 *.part
 .venv-build/
+
+.cloud-tools/
