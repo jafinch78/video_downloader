@@ -37,7 +37,7 @@ Run tests from the repository root:
 .venv/bin/python -m unittest discover -v
 ```
 
-Tests generate tiny local media and use a loopback HTTP server; they do not depend on a third-party video site. FFmpeg and FFprobe are required. GUI tests skip without a display: a run with skipped GUI tests does not verify the GUI. With Xvfb running, use `DISPLAY=:97 .venv/bin/python -m unittest discover -v` (substitute its actual display).
+Tests generate tiny local media and use a loopback HTTP server; they do not depend on a third-party video site. FFmpeg and FFprobe are required. Logging execution tests additionally require Windows PowerShell 5.1 or PowerShell on Linux (the cloud setup retains a verified portable copy). Skipped logging tests do not verify the logger. GUI tests skip without a display: a run with skipped GUI tests does not verify the GUI. With Xvfb running, use `DISPLAY=:97 .venv/bin/python -m unittest discover -v` (substitute its actual display).
 
 ## Prepare Windows media tools
 
@@ -61,7 +61,7 @@ On Windows with **Python 3.12.7 x64**, Tcl/Tk, and prepared assets:
 BUILD_WINDOWS_EXE.bat
 ```
 
-This creates `.venv-build`, installs pinned dependencies, checks asset hashes, runs tests, builds a **windowed one-folder** EXE with **PyInstaller 6.14.1**, and collects dependency/runtime licenses. Output: `dist\VideoDownloader\VideoDownloader.exe`. A frozen worker uses a private event file, so progress does not depend on a console being present. Heavy extractor imports occur in the download worker, keeping GUI startup lightweight.
+This creates `.venv-build`, installs pinned dependencies, checks asset hashes, performs explicit local dependency/Tcl/Tk tests, runs the suite, builds a **windowed one-folder** EXE with **PyInstaller 6.14.1**, collects licenses, checks bundle contents, and executes the actual EXE dependency/media smoke test. The script reports build success only after all those steps pass. Output: `dist\VideoDownloader\VideoDownloader.exe`. A frozen worker uses a private event file, so progress does not depend on a console being present. Heavy extractor imports occur in the download worker, keeping GUI startup lightweight.
 
 The packaging method follows the Toyota CYD35 related application's [documented Windows 1607 validation](https://github.com/jafinch78/Toyota-Hybrid-CYD35-Diagnostic-CAN-Logger/blob/main/docs/releases/video-narration-transcriber-v1.0.5/VALIDATION.md). That record validates that other application, not this downloader's new dependency combination.
 
@@ -73,7 +73,7 @@ Run on **native Windows 10 x64 version 1607 build 14393**:
 RELEASE_CHECKLIST_WIN1607.bat
 ```
 
-The automated check rejects other OS builds, runs the actual frozen EXE's diagnostic mode, generates separate audio/video streams, serves them locally, downloads/merges them through the frozen worker, checks both streams, and records runtime versions and hashes in `dist\validation-win1607.json`. Windows build tooling/Python can be present for this automated harness; that does not establish no-Python startup on the destination machine.
+The automated check rejects other OS builds, runs the actual frozen EXE's diagnostic mode, generates separate audio/video streams, serves them locally, downloads/merges them through the frozen worker, checks both streams, and records runtime versions and hashes in `logs\validation-win1607.json`. Windows build tooling/Python can be present for this automated harness; that does not establish no-Python startup on the destination machine.
 
 Also perform these manual checks using the exact extracted distribution:
 
@@ -96,3 +96,26 @@ The ZIP and SHA-256 are written under `dist\releases`. ZIP creation alone is not
 ## Maintainer notes
 
 Refresh dependencies through a reviewed rebuild and repeat the Windows release gates. The app never self-updates or installs missing runtimes. `requirements.txt` identifies the extractor feature set; `requirements-lock.txt` pins its resolved dependencies; `requirements-build.txt` adds Windows build tools. Application worker events are JSON-lines in a private temporary directory, removed after exit. No external service or API key is needed.
+
+
+## Build logs, pauses, and required dependency checks
+
+Both BAT entry points stream progress, stdout and stderr into timestamped UTF-8 `logs/build-*.log` or `logs/validate-*.log` files. Each has a matching JSON summary with start/end times, duration, success/failure and the real exit code. The console prints the log path and pauses on **both success and failure**. Use `--no-pause` explicitly for automation. Windows PowerShell 5.1 is required by the logger and is included with Windows 10 1607. If PowerShell cannot launch, a bootstrap-error log and the pause remain available.
+
+```bat
+BUILD_WINDOWS_EXE.bat --no-pause
+RELEASE_CHECKLIST_WIN1607.bat --no-pause
+RELEASE_CHECKLIST_WIN1607.bat --manual-confirmed --no-pause
+```
+
+Dependency evidence is separated:
+
+- `logs/local-dependencies.json`: all 11 pinned Python runtime packages must import at their exact versions. The check records module paths and exercises native AES, native Brotli, the certificate store, Tcl/Tk initialization, FFmpeg and FFprobe. `pip check` additionally checks installed package requirements.
+- `logs/bundled-dependencies.json`: the **actual built EXE** must pass its `--self-test`, including the same dependency checks, while installed-Python paths are removed. Frozen package imports must resolve inside the bundle. The actual bundled media tools must then generate, download, merge, and probe a local audio/video fixture. This is a general Windows bundle smoke test; it does not certify Windows 1607.
+- `logs/validation-win1607.json`: the preceding checks are repeated on the explicitly required native OS, with manual GUI/offline/playback/cancellation checks recorded separately.
+
+`python -m scripts.verify_delivery --folder dist/VideoDownloader` checks the EXE, Python DLL, Visual C runtime DLL, Tcl/Tk data, media tools, notices, sources, and asset hashes. `python -m scripts.verify_delivery --zip PATH` inspects the actual application ZIP. A source ZIP is intentionally rejected by these commands.
+
+`python -m scripts.package_release` now refuses missing/incomplete bundles or an absent, failed, stale or wrong-bundle smoke report. The report binds every bundle file to its hash, including Python DLLs and certificate data; changing any file requires re-running the actual EXE checks. It includes the matching report inside the ZIP and re-verifies archive contents. Packaging tests use deliberately non-runnable structural fixtures; they do not count as Windows execution.
+
+Some website extractors require optional JavaScript runtimes, browser authentication, or services outside the declared bundle. Such capabilities remain outside this version. Package-import checks do not establish that every website is supported.

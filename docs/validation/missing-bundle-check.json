@@ -1,0 +1,9 @@
+{
+  "exe_sha256": null,
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "automated_pass": false,
+  "kind": "bundled-runtime-smoke",
+  "manual_confirmed": false,
+  "release_ready": false,
+  "error": "Application delivery is incomplete: missing VideoDownloader.exe"
+}

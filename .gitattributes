@@ -1,0 +1,2 @@
+# Source archives must not recursively embed earlier release archives.
+releases export-ignore

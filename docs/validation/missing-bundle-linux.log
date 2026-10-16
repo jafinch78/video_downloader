@@ -1,0 +1,7 @@
+Task: missing-bundle-linux
+Started UTC: 2026-10-16T18:47:55.9102313Z
+Log: ./logs/missing-bundle-linux-20261016-184756-039-e8b24c62.log
+PowerShell: 7.4.13
+Checking portable folder structure and bundled asset integrity...
+BUNDLED CHECK FAILED: Application delivery is incomplete: missing VideoDownloader.exe. Report: /workspace/video_downloader/logs/missing-bundle.json
+FAILED | Exit code: 1 | Finished UTC: 2026-10-16T18:47:56.1526398Z

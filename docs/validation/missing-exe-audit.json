@@ -1,0 +1,12 @@
+{
+  "artifact": "VideoDownloader-0.1.0-source.zip",
+  "sha256": "a19d806acce203d5eb160e65ba37ff8e8ac3a7e843df6f6338419c2712f665ec",
+  "archive_entries": 47,
+  "exe_entries": [],
+  "expected_exe_exists": false,
+  "host_os": "Linux",
+  "artifact_type": "source-only",
+  "application_delivery_complete": false,
+  "artifact_repository_commit": "40289a4ac82dd1bdc723f1a3abb042c742324d2d",
+  "note": "Audit of the original published source archive, before corrected scripts were added; this hash identifies that original file."
+}

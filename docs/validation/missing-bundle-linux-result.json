@@ -1,0 +1,9 @@
+{
+  "task": "missing-bundle-linux",
+  "started_utc": "2026-10-16T18:47:55.9102313Z",
+  "finished_utc": "2026-10-16T18:47:56.1526398Z",
+  "elapsed_seconds": 0.2424085,
+  "exit_code": 1,
+  "success": false,
+  "log_file": "./logs/missing-bundle-linux-20261016-184756-039-e8b24c62.log"
+}

@@ -1,4 +1,4 @@
-# Development validation — 2026-10-16
+# Initial development validation — 2026-10-16
 
 ## Verified in this machine
 
@@ -39,4 +39,4 @@ An initial combined GUI/process test run crashed with Tcl_AsyncDelete when destr
 
 Build and validate on Windows using README.md and the supplied scripts. Check no-Python/offline GUI startup, real supported-site extraction, playback, Unicode paths, failure recovery, and cancellation during merging on build 14393. The generated release checklist records artifact hashes and distinguishes automated checks from manually attested checks.
 
-No third-party live website download was run: such checks are optional and would not establish universal site support. No release was pushed or published. All source commits currently exist only in this checkout; fresh-task restoration of local-only commits has not been independently verified. The source ZIP provides a separate portable copy of the code.
+No third-party live website download was run: such checks are optional and would not establish universal site support. At this initial checkpoint no release had been published. Source code and the source ZIP were subsequently uploaded to GitHub; no Windows binary was produced. See INCIDENT-2026-10-16-missing-exe.md for the follow-up investigation and corrected verification requirements.

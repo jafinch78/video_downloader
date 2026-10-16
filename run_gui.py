@@ -5,10 +5,13 @@ if __name__ == '__main__':
     if '--worker' in sys.argv[1:]:
         from video_downloader.worker import main
         sys.exit(main(sys.argv[2:]))
-    elif len(sys.argv) == 3 and sys.argv[1] == '--diagnostic':
+    elif len(sys.argv) == 3 and sys.argv[1] in ('--diagnostic', '--self-test'):
         from pathlib import Path
         from video_downloader.diagnostics import write_diagnostic
-        write_diagnostic(Path(sys.argv[2]))
+        try:
+            write_diagnostic(Path(sys.argv[2]), check_gui=sys.argv[1]=='--self-test')
+        except Exception:
+            sys.exit(1)  # Failure details are retained in the requested JSON report.
     else:
         from video_downloader.gui import main
         main()
