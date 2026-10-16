@@ -1,4 +1,5 @@
 """Copy installed dependency and runtime license texts into the portable folder."""
+import hashlib
 import shutil
 import sys
 from importlib.metadata import distribution
@@ -25,6 +26,18 @@ def collect(output: Path, include_runtime=True):
     if include_runtime:
         base=Path(sys.base_prefix)
         for name,source in [('Python',base/'LICENSE.txt'),('Tcl',base/'tcl/tcl8.6/license.terms'),('Tk',base/'tcl/tk8.6/license.terms')]:
+            if name in ('Tcl', 'Tk') and not source.is_file():
+                # CPython 3.12.7 Windows bundles Tcl/Tk 8.6.13 but does not
+                # install these separate upstream notice files. Retain verified
+                # copies so packaging remains offline and notices stay mandatory.
+                source=Path(__file__).resolve().parents[1]/'packaging/licenses'/f'{name}-8.6.13.txt'
+                expected={
+                    'Tcl':'c0a69a2bfd757361ec7e6143973b103c90409316b49e9c88db26ad6388e79f16',
+                    'Tk':'2cde822b93ca16ae535c954b7dfe658b4ad10df2a193628d1b358f1765e8b198',
+                }[name]
+                if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest()!=expected:
+                    raise ValueError(f'Missing or altered bundled {name} 8.6.13 license: {source}')
+                print(f'{name}: using verified bundled 8.6.13 license')
             if not source.is_file():
                 raise ValueError(f'Cannot locate {name} runtime license at {source}')
             target=output/name/'LICENSE.txt'
