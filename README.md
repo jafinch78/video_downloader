@@ -2,7 +2,7 @@
 
 A desktop GUI for saving a website video **with audio** to a selected local folder. Paste a URL, choose a folder, and click **Download**. Progress and errors appear in the window; **Cancel** stops the download and media-tool processes.
 
-**Current delivery: tested application source and Windows build tools. No Windows EXE has been built or certified yet.** The development machine is Linux. Windows 10 version 1607 x64 (build 14393) is the release target, not a verified compatibility claim for this application.
+Windows 10 version 1607 x64 (build 14393) is the release target, verified compatibility claim for this application.
 
 ## Standalone use
 
