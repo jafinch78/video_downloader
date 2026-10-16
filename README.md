@@ -41,6 +41,12 @@ Tests generate tiny local media and use a loopback HTTP server; they do not depe
 
 ## Prepare Windows media tools
 
+The build now prepares missing assets automatically at step 4. `scripts/build_support.py` downloads Gyan's pinned FFmpeg 6.1.1 x64 essentials ZIP and the matching upstream FFmpeg source, verifies the binary SHA-256 against Microsoft's winget manifest and source SHA-512 against Microsoft's vcpkg recipe, and creates the required asset manifest. Downloads are cached in `%TEMP%\VideoDownloader-build-cache`; later builds validate and reuse existing assets. Existing unrecognized files are not overwritten. First setup needs internet access. The target Windows execution checks still determine compatibility; archive verification alone does not certify Windows 1607.
+
+The automatic `ffmpeg-source.zip` contains the verified **upstream FFmpeg source**, not all vendor third-party dependency/build sources. This scope is printed and recorded in the manifest. Asset checks establish identity and runtime packaging, not complete corresponding-source compliance for redistributing the vendor binaries. The manual preparation method below remains available when assembling the full vendor-specific source set.
+
+### Manual/custom asset preparation
+
 Use a trusted **static Windows x64 ZIP build** of FFmpeg/FFprobe. Verify its publisher's SHA-256 before importing it. The ZIP must contain exactly one `ffmpeg.exe`, `ffprobe.exe`, and `LICENSE.txt`. Obtain the corresponding source/build/dependency-source ZIP required by that build's license, and its authoritative checksum. Do not substitute a self-generated hash for a publisher checksum.
 
 The application uses the tools as separate executables. Neither the Python/PyInstaller versions nor a modern Windows FFmpeg build alone establish Windows 1607 support. The current BtbN README guarantees Windows 10 22H2, with no guarantee for older versions. An appropriately compatible media-tool build and the native checks below remain prerequisites. Gyan's distribution host was inaccessible from this cloud instance; verification was not bypassed.
@@ -55,7 +61,7 @@ The command checks both archive hashes before importing into ignored `assets/`, 
 
 ## Build the portable Windows EXE
 
-On Windows with **Python 3.12.7 x64**, Tcl/Tk, and prepared assets:
+On Windows with **Python 3.12.7 x64** and Tcl/Tk:
 
 ```bat
 BUILD_WINDOWS_EXE.bat
