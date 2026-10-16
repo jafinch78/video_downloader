@@ -68,7 +68,9 @@ class MediaIntegrationTests(unittest.TestCase):
         manifest=self.root/'split.mpd'
         subprocess.run(['ffmpeg','-v','error','-f','lavfi','-i','color=size=64x64:rate=10:duration=1',
                         '-f','lavfi','-i','sine=frequency=440:duration=1','-c:v','mpeg4','-c:a','aac',
-                        '-shortest','-f','dash',str(manifest)], check=True, capture_output=True)
+                        '-shortest','-f','dash',manifest.name], cwd=manifest.parent, check=True, capture_output=True)
+        self.assertGreaterEqual(len(list(self.root.glob('init-stream*.m4s'))),2, 'DASH initialization files must be inside the HTTP-served folder')
+        self.assertGreaterEqual(len(list(self.root.glob('chunk-stream*.m4s'))),2, 'DASH audio/video fragments must be inside the HTTP-served folder')
         events=[]
         final=run_download(f'http://127.0.0.1:{self.server.server_port}/split.mpd',self.output,events.append)
         self.assertTrue(final.is_file())

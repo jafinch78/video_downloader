@@ -50,7 +50,9 @@ def check_bundle(exe: Path, report_path: Path):
             print('Generating a local audio/video fixture using the bundled FFmpeg...',flush=True)
             subprocess.run([str(ffmpeg),'-v','error','-f','lavfi','-i','color=size=64x64:rate=10:duration=2',
                 '-f','lavfi','-i','sine=frequency=440:duration=2','-c:v','mpeg4','-c:a','aac','-shortest',
-                '-f','dash',str(media/'sample.mpd')],check=True,timeout=60)
+                '-f','dash','sample.mpd'],cwd=media,check=True,timeout=60)
+            if len(list(media.glob('init-stream*.m4s')))<2 or len(list(media.glob('chunk-stream*.m4s')))<2:
+                raise ValueError('DASH fixture fragments were not generated inside the HTTP-served media folder.')
             class Quiet(http.server.SimpleHTTPRequestHandler):
                 def log_message(self,*args):
                     pass
